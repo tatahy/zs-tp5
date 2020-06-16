@@ -7,7 +7,9 @@
 // | Licensed ( http://www.apache.org/licenses/LICENSE-2.0 )
 // +----------------------------------------------------------------------
 
-// use think\facade\Route;
+//添加类引用
+use think\facade\Route;
+use think\facade\Env;
 
 Route::rule('/','index/index','post|get');
 

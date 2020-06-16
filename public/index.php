@@ -11,7 +11,6 @@
 namespace think;
 
 // use think\facade\Container;
-// use think\Container;
 
 // 加载基础文件
 require __DIR__ . '/../thinkphp/base.php';
