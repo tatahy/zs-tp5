@@ -21,6 +21,7 @@ Route::get('think', function () {
 //路由到emqx模块/httpapi控制器/index操作
 Route::rule('emqx/httpapi$','emqx/httpapi/index','post')
 // Route::post('emqx/httpapi$','emqx/httpapi/index')
+// Route::get('emqx/httpapi$','emqx/httpapi/index')
   	->header('Access-Control-Allow-Origin','*')
   	->header('Access-Control-Allow-Credentials', 'true')
     ->allowCrossDomain(); 
