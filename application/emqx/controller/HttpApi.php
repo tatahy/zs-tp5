@@ -7,7 +7,7 @@ use think\Request;
 //使用http客户端
 use GuzzleHttp\Client;
 
-class HttpApi extends Controller
+class Httpapi extends Controller
 {
     const REQMETHODS=['GET','POST','DELETE','PUT'];
     // const EMQXHOST='http://localhost:8081/';
@@ -63,8 +63,8 @@ class HttpApi extends Controller
     }
 
     // Todo: 1. 接收前端传来的EMQX-rest-api参数
-    // TODO: 2. 向http://localhost:8081/发送request, {api:'api/v4/clients',method:'GET'}
-    // TODO: 3. 返回http://localhost:8081/的response给前端
+    // TODO: 2. 向远程服务器发送request, {api:'api/v4/clients',method:'GET'}
+    // TODO: 3. 返回远程服务器的response给前端
     public function index(Request $req)
     {
         $this->route=$req->has('route')?$req->param('route'):'';
