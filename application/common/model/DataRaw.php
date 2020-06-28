@@ -1,12 +1,12 @@
 <?php
 
-namespace app\terminal\model;
+namespace app\common\model;
 
 use think\Model;
-
-use app\terminal\model\Info;
 use think\Collection;
 use think\Db;
+
+use app\common\model\Info;
 
 class DataRaw extends Model
 {
@@ -14,8 +14,18 @@ class DataRaw extends Model
   // 设置json类型字段
   protected $json = ['data'];
   protected $append = ['module_info', 'terminal_sn'];
-  //覆盖框架Model类的属性值，因为默认的值都是小写
-  protected $name='data_raw';
+  //覆盖框架Model类的属性值，因为默认的值都是小写，不会有下划线
+  protected $name = 'data_raw';
+
+  // 模型初始化
+  protected static function init()
+  {
+    //TODO:初始化内容
+
+    // $obj=new self;
+
+
+  }
 
   //字段status的获取器，状态码转为文字
   public function getDataAttr($value)
@@ -38,22 +48,18 @@ class DataRaw extends Model
     return count($list) ? $list->sn : '无';
   }
 
-  public function getAppendItems()
-  {
-    return $this->append;
-  }
-
   //得到数据表中的字段名称
-  public function getFieldsName($opt = '')
+  public function getFieldsName($type = '')
   {
+    //获取当前类名，__CLASS__ 获取当前类名，输出：命名空间的写法
+    // $name = app_com_uncamelize(array_pop(explode('\\', __CLASS__)));
     //使用原生查询获取所有字段信息数组，转换为数据集对象。
+    $arr = new Collection(Db::query("show COLUMNS FROM " . $this->name));
     // $arr = new Collection(Db::query("show COLUMNS FROM data_raw" ));
-    $arr = new Collection(Db::query("show COLUMNS FROM ".$this->name ));
-
     $origin = $arr->column('Field');
     $append = $this->append;
 
-    switch ($opt) {
+    switch ($type) {
       case 'origin':
         $arr = $origin;
         break;

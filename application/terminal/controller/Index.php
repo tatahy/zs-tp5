@@ -5,8 +5,6 @@ namespace app\terminal\controller;
 use think\Controller;
 
 use think\Request;
-use think\Db;
-use think\Collection;
 
 use app\terminal\model\Info;
 use app\terminal\model\DataRaw;
@@ -24,6 +22,17 @@ class Index extends Controller
         'fields' => [],
         'items' => [],
         'err' => ''
+    ];
+    //使用数据模型进行查询的参数
+    private $mdlParam=[
+        'tbName'=>'',
+        'fields'=>[
+            'origin'=>[],
+            'append'=>[],
+        ],
+        'where'=>'',
+        'page'=>'',
+        'order'=>''
     ];
 
     // PHP获取当前类名、方法名
@@ -67,12 +76,11 @@ class Index extends Controller
             // }
 
             $fields = array_intersect($req->param('fields'), self::TBFIELDS[$tbName]);
+            if (count($fields) == 0) {
+                $fields = self::TBFIELDS[$tbName];
+            }
         }
-        if (count($fields) == 0) {
-            $fields = self::TBFIELDS[$tbName];
-        }
-
-
+        
         //处理limit
         $limit = $req->has('limit') ? $req->param('limit') : 0;
         if ($limit > 10000) {
@@ -82,42 +90,30 @@ class Index extends Controller
         //选择数据模型
         switch ($tbName) {
             case 'info':
-                $dbM = new Info;
+                $mdl = new Info;
                 break;
 
             case 'data_raw':
-                $dbM = new DataRaw;
+                $mdl = new DataRaw;
                 break;
         };
         //得到数据集
-        $items = $dbM->where('id', '>', 0)
+        $items = $mdl->where('id', '>', 0)
             ->field($fields)
             // ->page(2, 10)
-            ->select();
-
-        //数据集进行追加处理
-        $this->res['items'] = $items
+            // ->limit($limit)
+            ->select()
             //调用模型获取器追加字段
-            ->append(['module_info','terminal_sn'])
-            //闭包追加字段
-            ->withAttr('terminal_sn', function ($value, $data) {
-               $value=Info::where('id',$data['info_id'])->find();
-                return count($value)?$value->sn:'无';
-            });
-
-        $this->res['fields'] = array_keys($this->res['items'][0]->toArray());
-
-        // $this->res['items'] =DataRaw::where('id', '>', 0)->append(['module_info'])->limit($limit)->select();
+            // ->append(['module_info','terminal_sn'])
+            ;
+           
+        $this->res['items'] = $items;
+        $this->res['fields'] = array_keys($items[0]->toArray());
         $this->res['err'] = '';
         //获取表中所有字段名
-        $this->res['allFields']=$this->_getFieldsName($tbName);
+        $this->res['allFields']=$mdl->getFieldsName();
+
         return json_encode($this->res);
     }
-    //获取表中所有字段名
-    private function _getFieldsName($tbName)
-    {
-        //使用原生查询获取所有字段信息数组，转换为数据集对象。
-        $names = new Collection(Db::query("show COLUMNS FROM " . $tbName));
-        return $names->column('Field');
-    }
+    
 }

@@ -50,6 +50,8 @@ return [
     'class_suffix'           => false,
     // 控制器类后缀
     'controller_suffix'      => false,
+    //路由变量规则：
+    // 'default_route_pattern'	=>	'[\w\-]+',
 
     // +----------------------------------------------------------------------
     // | 模块设置
