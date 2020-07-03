@@ -15,7 +15,7 @@ class Info extends Model
   //字段status的获取器，状态码转为文字输出
   public function getStatusAttr($value)
   {
-    $status = [100 => '', 200 => '正常', 300 => '', 400 => ''];
+    $status = [100 => '', 200 => '正常', 300 => '', 400 => '异常',500=>'离线'];
     return $status[$value];
   }
   
