@@ -38,7 +38,7 @@ class Info extends Model
     $arr = new Collection(Db::query("show COLUMNS FROM " . $this->name));
     $origin=$arr->column('Field');
     $append=$this->append;
-
+    
     switch($opt){
       case 'origin':
         $arr=$origin;
