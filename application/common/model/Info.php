@@ -12,11 +12,20 @@ class Info extends Model
   protected $pk = 'id';
   protected $append = [];
 
+  const STATUS= [100 => '未知', 200 => '正常', 300 => '', 400 => '异常',500=>'离线'];
+
+  //字段status的修改器，文字转为状态码输入
+  public function setStatusAttr($value)
+  {
+    $index = array_search($value,self::STATUS);
+    return $index?self::STATUS[$index]:self::STATUS['100'];
+  }
+
   //字段status的获取器，状态码转为文字输出
   public function getStatusAttr($value)
   {
-    $status = [100 => '', 200 => '正常', 300 => '', 400 => '异常',500=>'离线'];
-    return $status[$value];
+    
+    return self::STATUS[$value];
   }
   
   //得到数据表中的字段名称

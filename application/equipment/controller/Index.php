@@ -77,6 +77,7 @@ class Index extends Controller
     private function _getQueryObj()
     {
         $param = $this->query;
+        $fields = $this->fields['origin'];
         // $name=array_keys($param);
         if (!count($param)) {
             //得到查询结果集中前1000项
@@ -86,6 +87,12 @@ class Index extends Controller
         $mdl = $this->_getMdl();
 
         //构造查询，利用链式查询生成模型对象
+
+        //是否定义fields
+        if (count($fields)) {
+            $mdl = $mdl->field($fields);
+        }
+
         //数组形式的where查询条件
         if (count($param['where'])) {
             $mdl = $mdl->where(new Where($param['where']));
@@ -106,6 +113,9 @@ class Index extends Controller
 
         // $mdl = null;
         // return $clct;
+
+
+
         return $mdl;
     }
 
@@ -133,13 +143,13 @@ class Index extends Controller
 
     private function _setRes()
     {
-  
+
         $this->res['fields'] = $this->fields['res'];
         $this->res['items'] = $this->items;
         $this->res['err'] = '';
     }
     //fields处理
-    public function setResFields($reqfields)
+    public function setFields($reqfields)
     {
         //模型对象
         $mdl = $this->_getMdl();
@@ -159,32 +169,21 @@ class Index extends Controller
         $this->fields = $fields;
     }
 
-    public function setResItems()
-    {
-        $fields = $this->fields;
-        //得到查询结果集
-        $clct = $this->_getQueryObj()->select();
-     
-        $this->items = count($fields['append']) ? $clct->append($fields['append']) : $clct;
-    }
-
     public function apiHandlerInfo()
     {
         $req = $this->req;
 
         //处理fields
         if ($req->has('fields')) {
-            $this->setResFields($req->param('fields'));
+            $this->setFields($req->param('fields'));
         }
 
-        //处理query，
+        //处理query
         if ($req->has('query')) {
-            $this->query = array_merge($this->query,$req->param('query'));
+            $this->query = array_merge($this->query, $req->param('query'));
             //得到结果集
-            $this->setResItems();
-
+            $this->items = $this->_getQueryObj()->select();
         }
-
     }
 
     public function apiHandlerBrief()
@@ -192,27 +191,75 @@ class Index extends Controller
         $req = $this->req;
         //处理fields
         if ($req->has('fields')) {
-            $this->setResFields($req->param('fields'));
+            $this->setFields($req->param('fields'));
         }
 
         //处理query，得到结果集
         if ($req->has('query')) {
             $query = $req->param('query');
 
-            if(count($query)){
-                foreach($query as $key=>$subQuery){
-                    $originVal=$this->query;
-                    $this->query= array_merge($originVal,$subQuery);
-                    if($key=='totalNum'){
-                        $this->items[$key]=$this->_getQueryObj()->count();
-                    }else if($key=='status'){
-                        //有使用获取器
-                        $clct=new Collection($this->_getQueryObj()->select()->toArray());
-                        $this->items[$key]=$clct->column($key);
-                    }else{
-                        $this->items[$key]=$this->_getQueryObj()->column($key);
+            if (count($query)) {
+
+                foreach ($query as $key => $subQuery) {
+                    $originVal = array_merge([], $this->query);
+
+                    $this->query = array_merge($originVal, $subQuery);
+                    //得到查询结果数据集对象
+                    $clct = $this->_getQueryObj();
+                    switch ($key) {
+                        case 'totalNum':
+                            $this->items[$key] = $clct->count();
+                            break;
+                        // case 'items':
+                        //     $this->items = $clct->select();
+                        //     break;
+                        default:
+                            $valArr = $clct->column($key);
+                            $txtArr = $valArr;
+
+                            //$valrr与$txtArr一一对应
+                            if ($key == 'status') {
+                                //status字段定义有获取器，要经过select()才会触发获取器
+                                $clctStatus = new Collection($clct->select()->toArray());
+                                $txtArr = $clctStatus->column($key);
+                            }
+
+                            for ($i = 0; $i < count($txtArr); $i++) {
+                                //准备查询条件
+                                $this->query = array_merge($originVal, ['where' => [$key => ['=', $valArr[$i]]]]);
+                                // if ($key == 'items') {
+                                //     $this->items[$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+                                // } else {
+                                //     $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+                                // }
+                                $this->items[$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+
+                                // $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+                            }
+                            break;
                     }
-                               
+
+
+                    // if ($key == 'totalNum') {
+
+                    //     $this->items[$key] = $clct->count();
+                    // } else {
+                    //     $valArr = $clct->column($key);
+                    //     $txtArr = $valArr;
+
+                    //     //$valrr与$txtArr一一对应
+                    //     if ($key == 'status') {
+                    //         //status字段定义有获取器，要经过select()才会触发获取器
+                    //         $clctStatus = new Collection($clct->select()->toArray());
+                    //         $txtArr = $clctStatus->column($key);
+                    //     }
+
+                    //     for ($i = 0; $i < count($txtArr); $i++) {
+                    //         //准备查询条件
+                    //         $this->query = array_merge($originVal, ['where' => [$key => ['=', $valArr[$i]]]]);
+                    //         $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+                    //     }
+                    // }
                 }
             }
         }
