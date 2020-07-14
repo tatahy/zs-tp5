@@ -43,12 +43,12 @@ Route::rule('emqx/httpapi$', 'emqx/httpapi/index', 'post')
 //     ->allowCrossDomain();
 
 // Route::rule('terminal/[:api]','terminal/index/index','post');
-Route::rule('terminal', 'terminal/index/index', 'post')
+Route::rule('terminal', 'terminal/index/index', 'POST')
     ->header('Access-Control-Allow-Origin', '*')
     ->header('Access-Control-Allow-Credentials', 'true')
     ->allowCrossDomain();
 
-Route::rule('equipment/:api', 'equipment/index/index', 'post')
+Route::rule('equipment/:api', 'equipment/index/index', 'POST')
     // ->pattern(['api' => '\w+'])
     ->header('Access-Control-Allow-Origin', '*')
     ->header('Access-Control-Allow-Credentials', 'true')

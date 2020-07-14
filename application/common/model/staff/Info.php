@@ -1,6 +1,6 @@
 <?php
 
-namespace app\common\model;
+namespace app\common\model\staff;
 
 use think\Model;
 
@@ -11,6 +11,8 @@ class Info extends Model
 {
   protected $pk = 'id';
   protected $append = [];
+  // 设置数据库连接，引用预定义的参数
+  protected $connection = 'db_terminal';
 
   const STATUS= [100 => '未知', 200 => '正常', 300 => '', 400 => '异常',500=>'离线'];
 

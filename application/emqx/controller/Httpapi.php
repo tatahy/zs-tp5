@@ -62,9 +62,9 @@ class Httpapi extends Controller
         return;
     }
 
-    // Todo: 1. 接收前端传来的EMQX-rest-api参数
-    // TODO: 2. 向远程服务器发送request, {api:'api/v4/clients',method:'GET'}
-    // TODO: 3. 返回远程服务器的response给前端
+    // 接收前端传来的EMQX-rest-api参数
+    // 向远程服务器发送request, {api:'api/v4/clients',method:'GET'}
+    // 返回远程服务器的response给前端
     public function index(Request $req)
     {
         $this->route=$req->has('route')?$req->param('route'):'';

@@ -5,19 +5,17 @@ namespace app\equipment\controller;
 use think\Controller;
 use think\Request;
 use think\Collection;
-//数据库链式查询中的where对象，用于where条件数组
-use think\db\Where;
 
-use app\common\model\DataRaw;
-use app\common\model\Info;
+use app\common\model\terminal\DataRaw;
+use app\common\model\terminal\Info;
 
 
 class Index extends Controller
 {
     //
-    const API = ['info', 'brief'];
+    const API = ['info', 'brief','data'];
     //定义要引用的数据表/模型名
-    const MDLNAME = ['info'];
+    const MDLNAME = ['info','data_raw'];
 
     //字符串
     private $api = '';
@@ -35,6 +33,8 @@ class Index extends Controller
     ];
     //查询参数
     private $query = [
+        //where接受数组形式的查询条件
+        //[['id','>','0'],['type','like','镁%']]
         'where' => [],
         'page' => '',
         'limit' => '',
@@ -95,7 +95,7 @@ class Index extends Controller
 
         //数组形式的where查询条件
         if (count($param['where'])) {
-            $mdl = $mdl->where(new Where($param['where']));
+            $mdl = $mdl->where($param['where']);
         }
 
         //数组形式的order条件
@@ -127,7 +127,10 @@ class Index extends Controller
         if (in_array($mdlName, self::MDLNAME)) {
             switch ($mdlName) {
                 case 'info':
-                    $mdl = new Info;
+                    $mdl = new Info();
+                    break;
+                case 'data_raw':
+                    $mdl = new DataRaw();
                     break;
                     // case 'summary':
 
@@ -210,9 +213,9 @@ class Index extends Controller
                         case 'totalNum':
                             $this->items[$key] = $clct->count();
                             break;
-                        // case 'items':
-                        //     $this->items = $clct->select();
-                        //     break;
+                            // case 'items':
+                            //     $this->items = $clct->select();
+                            //     break;
                         default:
                             $valArr = $clct->column($key);
                             $txtArr = $valArr;
@@ -238,31 +241,29 @@ class Index extends Controller
                             }
                             break;
                     }
-
-
-                    // if ($key == 'totalNum') {
-
-                    //     $this->items[$key] = $clct->count();
-                    // } else {
-                    //     $valArr = $clct->column($key);
-                    //     $txtArr = $valArr;
-
-                    //     //$valrr与$txtArr一一对应
-                    //     if ($key == 'status') {
-                    //         //status字段定义有获取器，要经过select()才会触发获取器
-                    //         $clctStatus = new Collection($clct->select()->toArray());
-                    //         $txtArr = $clctStatus->column($key);
-                    //     }
-
-                    //     for ($i = 0; $i < count($txtArr); $i++) {
-                    //         //准备查询条件
-                    //         $this->query = array_merge($originVal, ['where' => [$key => ['=', $valArr[$i]]]]);
-                    //         $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
-                    //     }
-                    // }
                 }
             }
         }
+    }
+
+    public function apiHandlerData()
+    {
+        
+        $reqData = $this->req->param();
+        //模型对象
+        $mdl = $this->_getMdl();
+        
+        //写入data_raw表，返回写入结果(bool值)
+        $result=$mdl->allowField(true)->save($reqData);
+        
+        if ($result){
+            // $this->items=$mdl->id;
+            $this->items=$mdl->get($mdl->id);
+        }else{
+            $this->items=[$reqData ];
+        }
+        //销毁对象。
+        $mdl=null;
     }
 
     public function index(Request $req, $api)
@@ -278,12 +279,16 @@ class Index extends Controller
                 case 'brief':
                     $this->apiHandlerBrief();
                     break;
+                case 'data':
+                    $this->apiHandlerData();
+                    break;
                     // default:
 
                     //     break;
             }
         }
         $this->_setRes();
+
         return json_encode($this->res);
 
         // $this->_setMdlParam($req);

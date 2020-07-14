@@ -58,4 +58,40 @@ return [
     'break_reconnect' => false,
     // 断线标识字符串
     'break_match_str' => [],
+
+    //定义配置参数1
+    'db_terminal' => [
+        // 数据库类型
+        'type'            => 'mysql',
+        // 服务器地址
+        'hostname'        => '127.0.0.1',
+        // 数据库名
+        'database'        => 'zs_terminal',
+        // 用户名
+        'username'        => 'zs_admin',
+        // 密码
+        'password'        => '12345678',
+        // 端口
+        'hostport'        => '',
+        // 数据库编码默认采用utf8
+        'charset'         => 'utf8',
+    ],
+
+    //定义配置参数2
+    'db_staff' => [
+        // 数据库类型
+        'type'            => 'mysql',
+        // 服务器地址
+        'hostname'        => '127.0.0.1',
+        // 数据库名
+        'database'        => 'zs_staff',
+        // 用户名
+        'username'        => 'zs_admin',
+        // 密码
+        'password'        => '12345678',
+        // 端口
+        'hostport'        => '',
+        // 数据库编码默认采用utf8
+        'charset'         => 'utf8',
+    ],
 ];

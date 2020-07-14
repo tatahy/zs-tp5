@@ -59,6 +59,11 @@ class Index extends Controller
     //  
     public function index(Request $req)
     {
+        //where查询条件
+        $id=$req->has('info_id')?$req->param('info_id'):0;
+      
+        $whereArr=!$id?[['id', '>', 0]]:[['info_id', '=', $id]];
+        
         //选择数据表
         $tbName = $req->has('tbName') ? $req->param('tbName') : 'info';
         if (!in_array($tbName, self::TBNAME)) {
@@ -98,7 +103,7 @@ class Index extends Controller
                 break;
         };
         //得到数据集
-        $items = $mdl->where('id', '>', 0)
+        $items = $mdl->where($whereArr)
             ->field($fields)
             // ->page(2, 10)
             // ->limit($limit)
@@ -108,7 +113,8 @@ class Index extends Controller
             ;
            
         $this->res['items'] = $items;
-        $this->res['fields'] = array_keys($items[0]->toArray());
+        //所有查询到的字段名
+        $this->res['fields'] = count($items)?array_keys($items[0]->toArray()):[];
         $this->res['err'] = '';
         //获取表中所有字段名
         $this->res['allFields']=$mdl->getFieldsName();

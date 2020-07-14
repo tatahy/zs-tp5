@@ -13,7 +13,7 @@ class DataRaw extends Model
   protected $pk = 'id';
   // 设置json类型字段
   protected $json = ['data'];
-  protected $append = ['module_info', 'terminal_sn'];
+  protected $append = ['terminal_sn','module_info','module_time'];
   //覆盖框架Model类的属性值，因为默认的值都是小写
   protected $name='data_raw';
 
@@ -30,6 +30,19 @@ class DataRaw extends Model
 
     return $data['data']->module;
   }
+
+   //获取器定义数据表中不存在的字段
+   public function getModuleTimeAttr($value, $data)
+   {
+    // $value=$data['data']->timestamp;
+    //将时间戳转为时间字符
+    $timestamp=floor($data['data']->timestamp/1000);
+    //时间戳中的毫秒数，是余数
+    $ms=fmod ($data['data']->timestamp,1000);
+    $value=date("Y-m-d H:i:s",$timestamp).'-'.$ms;
+     return $value;
+   }
+
 
   // 获取器定义数据表中不存在的字段
   public function getTerminalSnAttr($value, $data)

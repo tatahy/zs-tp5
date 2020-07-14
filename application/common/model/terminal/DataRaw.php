@@ -1,21 +1,26 @@
 <?php
 
-namespace app\common\model;
+namespace app\common\model\terminal;
 
 use think\Model;
 use think\Collection;
 use think\Db;
 
-use app\common\model\Info;
+use app\common\model\terminal\Info;
 
 class DataRaw extends Model
 {
   protected $pk = 'id';
+  // 设置数据库连接，引用预定义的参数
+  protected $connection = 'db_terminal';
+
   // 设置json类型字段
   protected $json = ['data'];
-  protected $append = ['module_info', 'terminal_sn'];
+  protected $append = ['module_info','module_time', 'terminal_sn'];
   //覆盖框架Model类的属性值，因为默认的值都是小写，不会有下划线
   protected $name = 'data_raw';
+  // 开启自动写入时间戳字段
+  protected $autoWriteTimestamp = 'datetime';
 
   // 模型初始化
   protected static function init()
@@ -30,8 +35,8 @@ class DataRaw extends Model
   //字段status的获取器，状态码转为文字
   public function getDataAttr($value)
   {
-    return $value->param;
-    // return $this->getData('data')->module;
+    // return $value->param;
+    return $this->getData('data')->param;
   }
 
   //获取器定义数据表中不存在的字段
@@ -41,7 +46,14 @@ class DataRaw extends Model
     return $data['data']->module;
   }
 
-  // 获取器定义数据表中不存在的字段
+    //获取器定义数据表中不存在的字段
+    public function getModuleTimeAttr($value, $data)
+    {
+  
+      return $data['data']->timestamp;
+    }
+
+  // // 获取器定义数据表中不存在的字段
   public function getTerminalSnAttr($value, $data)
   {
     $list = Info::where('id', $data['info_id'])->find();
