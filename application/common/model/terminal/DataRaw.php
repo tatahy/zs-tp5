@@ -16,6 +16,9 @@ class DataRaw extends Model
 
   // 设置json类型字段
   protected $json = ['data'];
+  // // 设置JSON数据返回数组
+  // protected $jsonAssoc = true;
+
   protected $append = ['module_info','module_time', 'terminal_sn'];
   //覆盖框架Model类的属性值，因为默认的值都是小写，不会有下划线
   protected $name = 'data_raw';
@@ -32,11 +35,23 @@ class DataRaw extends Model
 
   }
 
-  //字段status的获取器，状态码转为文字
+  //字段data的获取器，
   public function getDataAttr($value)
   {
     // return $value->param;
-    return $this->getData('data')->param;
+    // return $this->getData('data')->param;
+    $arr=['rh'=>'相对湿度（%）','amp'=>'电流（A）','vol'=>'电压（V）','temp'=>'温度（C）'];
+    $name=array_keys($arr);
+    $param=[];
+    foreach($value->param as $key=>$val){
+      if(in_array($key,$name)){
+        $param[$arr[$key]]=$val;
+      }else{
+        $param[$key]=$val;
+      }
+    }
+
+    return $param;
   }
 
   //获取器定义数据表中不存在的字段
@@ -84,5 +99,29 @@ class DataRaw extends Model
     }
 
     return $arr;
+  }
+  
+  public function getGroup($field='info_id')
+  {
+    // $fields=$this->getFieldsName();
+    // $field=in_array($field,$fields)?$field:'info_id';
+
+    $infoMdl=new Info();
+    $items=$this->group($field)->select();
+
+    foreach($items as $idx=>$item){
+      $arr=$item->toArray();
+   
+      //将json字段值转为数组
+      $arr['data']=[];
+      foreach($item->data as $k=>$v){
+        array_push($arr['data'],$k);
+      }
+      $info=$infoMdl->get($item->info_id)->hidden(['id','create_time','update_time']);
+      $items[$idx]=array_merge($info->toArray(),$arr);
+    }
+
+    $infoMdl=null;
+    return $items;
   }
 }

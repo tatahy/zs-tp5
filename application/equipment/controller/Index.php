@@ -13,9 +13,9 @@ use app\common\model\terminal\Info;
 class Index extends Controller
 {
     //
-    const API = ['info', 'brief','data'];
+    const API = ['info', 'brief', 'create', 'group', 'chart'];
     //定义要引用的数据表/模型名
-    const MDLNAME = ['info','data_raw'];
+    const MDLNAME = ['info', 'data_raw'];
 
     //字符串
     private $api = '';
@@ -76,10 +76,10 @@ class Index extends Controller
 
     private function _getQueryObj()
     {
-        $param = $this->query;
+        $query = $this->query;
         $fields = $this->fields['origin'];
-        // $name=array_keys($param);
-        if (!count($param)) {
+        // $name=array_keys($query);
+        if (!count($query)) {
             //得到查询结果集中前1000项
             return $this->_getMdl()->order('create_time', 'desc')->limit(1000)->select();
         }
@@ -94,18 +94,18 @@ class Index extends Controller
         }
 
         //数组形式的where查询条件
-        if (count($param['where'])) {
-            $mdl = $mdl->where($param['where']);
+        if (count($query['where'])) {
+            $mdl = $mdl->where($query['where']);
         }
 
         //数组形式的order条件
-        if (count($param['order'])) {
-            $mdl = $mdl->order($param['order']);
+        if (count($query['order'])) {
+            $mdl = $mdl->order($query['order']);
         }
 
         //group只能是字符串
-        if (strlen($param['group'])) {
-            $mdl = $mdl->group($param['group']);
+        if (strlen($query['group'])) {
+            $mdl = $mdl->group($query['group']);
         }
 
         //得到查询结果集
@@ -230,14 +230,10 @@ class Index extends Controller
                             for ($i = 0; $i < count($txtArr); $i++) {
                                 //准备查询条件
                                 $this->query = array_merge($originVal, ['where' => [$key => ['=', $valArr[$i]]]]);
-                                // if ($key == 'items') {
-                                //     $this->items[$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
-                                // } else {
-                                //     $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
-                                // }
-                                $this->items[$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
 
-                                // $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+                                // $this->items[$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
+
+                                $this->items[$key][$i] = ['txt' => $txtArr[$i], 'value' => $valArr[$i], 'idArr' => $this->_getQueryObj()->column('id')];
                             }
                             break;
                     }
@@ -246,47 +242,135 @@ class Index extends Controller
         }
     }
 
-    public function apiHandlerData()
+    public function apiHandlerCreate()
     {
-        
+
         $reqData = $this->req->param();
         //模型对象
         $mdl = $this->_getMdl();
-        
-        //写入data_raw表，返回写入结果(bool值)
-        $result=$mdl->allowField(true)->save($reqData);
-        
-        if ($result){
+
+        //写入data_raw表，返回写入的结果(bool值)
+        $result = $mdl->allowField(true)->save($reqData);
+
+        if ($result) {
             // $this->items=$mdl->id;
-            $this->items=$mdl->get($mdl->id);
-        }else{
-            $this->items=[$reqData ];
+            $this->items = $mdl->get($mdl->id);
+        } else {
+            $this->items = [$reqData];
         }
         //销毁对象。
-        $mdl=null;
+        $mdl = null;
+    }
+
+    public function apiHandlerGroup()
+    {
+
+        $req = $this->req;
+        // $this->items =$req->param();
+
+        //处理fields
+        if ($req->has('fields')) {
+            $this->setFields($req->param('fields'));
+        }
+        //得到结果集
+        $this->items = $this->_getMdl()->getGroup();
+
+        //处理query
+        // if ($req->has('query')) {
+        //     $this->query = array_merge($this->query, $req->param('query'));
+        //     //得到结果集
+        //     $this->items = $this->_getQueryObj()->select();
+        // }
+
+    }
+
+    public function apiHandlerChart()
+    {
+
+        $req = $this->req;
+        $this->items = $req->param();
+        // 处理query
+        if ($req->has('query')) {
+            $this->query = array_merge($this->query, $req->param('query'));
+            //得到结果集
+            // $this->items = $this->_getQueryObj()->column('data');
+            //清空
+            $this->items = [];
+            $col=$this->_getQueryObj();
+
+            //组装params
+            $params=[
+                'rh'=> ['name'=>'rh','txt'=>'相对湿度（%）','timestamp'=>[],'value'=>[]],
+                'amp'=>['name'=>'amp','txt'=>'电流（A）','timestamp'=>[],'value'=>[]],
+                'temp'=>['name'=>'temp','txt'=>'温度（C）','timestamp'=>[],'value'=>[]],
+                'vol'=> ['name'=>'vol','txt'=>'电压（V）','timestamp'=>[],'value'=>[]],
+            ];
+            //data字段值是json类型
+            foreach($col->column('data') as $key=>$val){
+                //将json字符串解码为数组形式
+                $arr=json_decode($val,true);
+                
+                foreach($arr['param'] as $name=>$v){
+                    $params[$name]['value'][$key]=$v;
+                    $params[$name]['timestamp'][$key]=$arr['timestamp'];
+                }
+            }
+           
+
+            // $this->items['rawData'] = $rawData;
+            $this->items['data'] =$col->select();
+            $this->items['info']= $this->_getMdl('info')->get($col->group('info_id')->column('info_id'));
+            $this->items['params']= array_values($params);
+        }
+    }
+
+    private function _getApiHandler()
+    {
+        $apiHandler='apiHandler'.ucfirst($this->api) ;
+        //根据字符串调用方法
+        return $this->{$apiHandler}();
+        // return $this->$apiHandler();
+        // return call_user_func(array($this,$apiHandler));
+
+        // switch ($this->api) {
+        //     case 'info':
+        //         $this->apiHandlerInfo();
+        //         break;
+        //     case 'brief':
+        //         $this->apiHandlerBrief();
+        //         break;
+        //     case 'create':
+        //         $this->apiHandlerCreate();
+        //         break;
+        //     case 'group':
+        //         $this->apiHandlerGroup();
+        //         break;
+        //     case 'chart':
+        //         $this->apiHandlerChart();
+        //         break;
+        // }
+    }
+
+    private function _checkParams()
+    {
+        $hasApi=in_array($this->api, self::API);
+        $hasTblName=in_array($this->req->param('tblName'),self::MDLNAME);
+        
+        if($hasTblName){
+            $this->mdlName = $this->req->param('tblName');
+        }
+        return $hasApi && $hasTblName;
     }
 
     public function index(Request $req, $api)
     {
-        if (in_array($api, self::API) && in_array($req->param('tblName'), self::MDLNAME)) {
-            $this->api = $api;
-            $this->mdlName = $req->param('tblName');
-            $this->req = $req;
-            switch ($api) {
-                case 'info':
-                    $this->apiHandlerInfo();
-                    break;
-                case 'brief':
-                    $this->apiHandlerBrief();
-                    break;
-                case 'data':
-                    $this->apiHandlerData();
-                    break;
-                    // default:
+        $this->api = $api;
+        $this->req = $req;
 
-                    //     break;
-            }
+        if($this->_checkParams()){
+            $this->_getApiHandler();
         }
+
         $this->_setRes();
 
         return json_encode($this->res);

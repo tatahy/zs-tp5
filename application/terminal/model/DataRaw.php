@@ -20,9 +20,22 @@ class DataRaw extends Model
   //字段status的获取器，状态码转为文字
   public function getDataAttr($value)
   {
-    return $value->param;
-    // return $this->getData('data')->module;
+    // return $value->param;
+    // return $this->getData('data')->param;
+    $arr=['rh'=>'相对湿度（%）','amp'=>'电流（A）','vol'=>'电压（V）','temp'=>'温度（C）'];
+    $name=array_keys($arr);
+    $param=[];
+    foreach($value->param as $key=>$val){
+      if(in_array($key,$name)){
+        $param[$arr[$key]]=$val;
+      }else{
+        $param[$key]=$val;
+      }
+    }
+
+    return $param;
   }
+
 
   //获取器定义数据表中不存在的字段
   public function getModuleInfoAttr($value, $data)

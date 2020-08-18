@@ -12,8 +12,8 @@ use app\terminal\model\DataRaw;
 class Index extends Controller
 {
     // const dbModel=['info'=>Info,'data_raw'=>DataRaw];
-    const TBNAME = ['info', 'data_raw'];
-    const TBFIELDS = [
+    const TBLNAME = ['info', 'data_raw'];
+    const TBLFIELDS = [
         'info' => ['id', 'sn', 'name', 'type', 'status', 'location', 'create_time'],
         'data_raw' => ['id', 'info_id', 'data', 'customer_id', 'create_time']
     ];
@@ -25,7 +25,7 @@ class Index extends Controller
     ];
     //使用数据模型进行查询的参数
     private $mdlParam=[
-        'tbName'=>'',
+        'tblName'=>'',
         'fields'=>[
             'origin'=>[],
             'append'=>[],
@@ -65,24 +65,20 @@ class Index extends Controller
         $whereArr=!$id?[['id', '>', 0]]:[['info_id', '=', $id]];
         
         //选择数据表
-        $tbName = $req->has('tbName') ? $req->param('tbName') : 'info';
-        if (!in_array($tbName, self::TBNAME)) {
+        $tblName = $req->has('tblName') ? $req->param('tblName') : 'info';
+        if (!in_array($tblName, self::TBLNAME)) {
             $this->res['items'] = $req->param();
             $this->res['err'] = 'wrong [tbName] value!';
             return json_encode($this->res);
         }
-        //字段处理，传入的字段与self::TBFIELDS[$tbName]取交集
+
+
+        //字段处理，传入的字段与self::TBLFIELDS[$tblName]取交集
         $fields = [];
         if ($req->has('fields')) {
-            // foreach (self::TBFIELDS[$tbName] as $key => $val) {
-            //     if (in_array($val, $req->param('fields'))) {
-            //         $fields[$key] = $val;
-            //     }
-            // }
-
-            $fields = array_intersect($req->param('fields'), self::TBFIELDS[$tbName]);
+             $fields = array_intersect($req->param('fields'), self::TBLFIELDS[$tblName]);
             if (count($fields) == 0) {
-                $fields = self::TBFIELDS[$tbName];
+                $fields = self::TBLFIELDS[$tblName];
             }
         }
         
@@ -92,8 +88,8 @@ class Index extends Controller
             $limit = 10000;
         }
 
-        //选择数据模型
-        switch ($tbName) {
+         //选择数据模型
+         switch ($tblName) {
             case 'info':
                 $mdl = new Info;
                 break;
@@ -102,6 +98,7 @@ class Index extends Controller
                 $mdl = new DataRaw;
                 break;
         };
+
         //得到数据集
         $items = $mdl->where($whereArr)
             ->field($fields)
@@ -114,7 +111,7 @@ class Index extends Controller
            
         $this->res['items'] = $items;
         //所有查询到的字段名
-        $this->res['fields'] = count($items)?array_keys($items[0]->toArray()):[];
+        $this->res['fields'] = count($items)?array_keys($items[0]->toArray()):$mdl->getFieldsName();
         $this->res['err'] = '';
         //获取表中所有字段名
         $this->res['allFields']=$mdl->getFieldsName();
