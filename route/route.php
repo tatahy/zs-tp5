@@ -54,6 +54,12 @@ Route::rule('equipment/:api', 'equipment/index/index', 'POST')
     ->header('Access-Control-Allow-Credentials', 'true')
     ->allowCrossDomain();
 
+Route::rule('login', 'login/index/index', 'POST')
+    // ->pattern(['api' => '\w+'])
+    ->header('Access-Control-Allow-Origin', '*')
+    ->header('Access-Control-Allow-Credentials', 'true')
+    ->allowCrossDomain();
+
 //设置全局MISS路由，一旦设置了MISS路由，相当于开启了强制路由模式
 //必须严格给每一个访问地址定义路由规则（包括首页），否则将抛出异常。
 Route::miss(function () {
